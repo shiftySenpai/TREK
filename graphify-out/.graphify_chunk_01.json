@@ -1,0 +1,126 @@
+{
+  "nodes": [
+    {"id": "nest_readme", "label": "NestJS Migration Layer Guide (README)", "file_type": "document", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_readme_brownfield_rewrite", "label": "Brownfield Rewrite (strangler migration effort)", "file_type": "concept", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_readme_module_layout_pattern", "label": "Per-Domain Module Layout Pattern", "file_type": "rationale", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_readme_parity_is_law", "label": "Parity Is Law (byte-identical migration principle)", "file_type": "rationale", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_readme_parity_gotchas", "label": "Parity Gotchas (Express-vs-Nest quirks)", "file_type": "rationale", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_readme_definition_of_done", "label": "Definition of Done (per module)", "file_type": "rationale", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_readme_three_tier_test_pattern", "label": "Three-Tier Test Pattern (unit/parity/e2e)", "file_type": "rationale", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+
+    {"id": "nest_weather", "label": "Weather Module (reference implementation)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_strangler", "label": "strangler.ts (prefix routing dispatcher)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_strangler_default_nest_prefixes", "label": "DEFAULT_NEST_PREFIXES", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_strangler_nest_prefixes_env", "label": "NEST_PREFIXES env var (runtime override)", "file_type": "concept", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "server_src_index", "label": "src/index.ts (top-level dispatcher)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+
+    {"id": "nest_common_idempotency_interceptor", "label": "IdempotencyInterceptor (APP_INTERCEPTOR)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "middleware_idempotency_applyidempotency", "label": "applyIdempotency (legacy Express middleware)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+
+    {"id": "nest_common_zod_validation_pipe", "label": "ZodValidationPipe", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_auth_jwt_auth_guard", "label": "JwtAuthGuard", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_auth_admin_guard", "label": "AdminGuard", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+
+    {"id": "tests_parity_parity", "label": "parity.ts (expectParity harness)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "tests_parity_parity_expectparity", "label": "expectParity()", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "tests_e2e_harness", "label": "e2e harness.ts (temp SQLite db harness)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "tests_e2e_harness_createtempdb", "label": "createTempDb()", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "tests_e2e_harness_seeduser", "label": "seedUser()", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "tests_e2e_harness_sessioncookie", "label": "sessionCookie()", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "vitest_config", "label": "vitest.config.ts (coverage gate, src/nest/** >=80%)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+
+    {"id": "nest_airports", "label": "Airports Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_config", "label": "Config Module (public, Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_system_notices", "label": "System-Notices Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_maps", "label": "Maps Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_categories", "label": "Categories Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_tags", "label": "Tags Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_notifications", "label": "Notifications Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_atlas", "label": "Atlas Module (Phase 1)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_vacay", "label": "Vacay Module (addon, Phase 2)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_packing", "label": "Packing Module (trip sub-domain, Phase 2)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_todo", "label": "Todo Module (trip sub-domain, Phase 2)", "file_type": "code", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+
+    {"id": "nest_notifications_test_smtp_wording", "label": "notifications test-smtp Admin-only error wording", "file_type": "concept", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null},
+    {"id": "nest_weather_latlon_error_wording", "label": "weather latitude/longitude required error wording", "file_type": "concept", "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}
+  ],
+  "edges": [
+    {"source": "nest_readme", "target": "nest_readme_brownfield_rewrite", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "server_src_index", "target": "nest_readme_brownfield_rewrite", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_weather", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_strangler", "target": "nest_strangler_default_nest_prefixes", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_strangler_default_nest_prefixes", "target": "nest_strangler_nest_prefixes_env", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "server_src_index", "target": "nest_strangler", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_common_idempotency_interceptor", "target": "middleware_idempotency_applyidempotency", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_readme_parity_is_law", "target": "nest_common_zod_validation_pipe", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_readme_parity_is_law", "target": "nest_weather_latlon_error_wording", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_weather", "target": "nest_weather_latlon_error_wording", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_readme_parity_gotchas", "target": "nest_notifications_test_smtp_wording", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_notifications", "target": "nest_notifications_test_smtp_wording", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_notifications_test_smtp_wording", "target": "nest_auth_admin_guard", "relation": "conceptually_related_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_readme_three_tier_test_pattern", "target": "tests_parity_parity", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "tests_parity_parity", "target": "tests_parity_parity_expectparity", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_readme_three_tier_test_pattern", "target": "tests_e2e_harness", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "tests_e2e_harness", "target": "tests_e2e_harness_createtempdb", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "tests_e2e_harness", "target": "tests_e2e_harness_seeduser", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "tests_e2e_harness", "target": "tests_e2e_harness_sessioncookie", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "tests_e2e_harness", "target": "nest_auth_jwt_auth_guard", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_readme_three_tier_test_pattern", "target": "vitest_config", "relation": "references", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_readme_definition_of_done", "target": "nest_readme_parity_is_law", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_readme_definition_of_done", "target": "nest_readme_three_tier_test_pattern", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_readme_definition_of_done", "target": "nest_strangler", "relation": "rationale_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_airports", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_config", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_system_notices", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_maps", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_categories", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_tags", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_notifications", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_atlas", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_vacay", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_packing", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_todo", "target": "nest_readme_module_layout_pattern", "relation": "implements", "confidence": "INFERRED", "confidence_score": 0.85, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+
+    {"source": "nest_airports", "target": "nest_weather", "relation": "semantically_similar_to", "confidence": "INFERRED", "confidence_score": 0.75, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_packing", "target": "nest_vacay", "relation": "semantically_similar_to", "confidence": "INFERRED", "confidence_score": 0.65, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0},
+    {"source": "nest_todo", "target": "nest_packing", "relation": "semantically_similar_to", "confidence": "INFERRED", "confidence_score": 0.75, "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md", "source_location": null, "weight": 1.0}
+  ],
+  "hyperedges": [
+    {
+      "id": "nest_readme_cross_cutting_foundation",
+      "label": "Cross-Cutting Foundation Pieces (idempotency + strangler routing)",
+      "nodes": ["nest_common_idempotency_interceptor", "nest_strangler", "middleware_idempotency_applyidempotency"],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md"
+    },
+    {
+      "id": "nest_readme_three_tier_test_hyperedge",
+      "label": "Three-Kind Test Suite Required Per Module",
+      "nodes": ["nest_readme_three_tier_test_pattern", "tests_parity_parity", "tests_e2e_harness", "vitest_config"],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md"
+    },
+    {
+      "id": "nest_readme_phase1_migrated_domains",
+      "label": "Phase 1 Leaf Domains Migrated to Nest",
+      "nodes": ["nest_weather", "nest_airports", "nest_config", "nest_system_notices", "nest_maps", "nest_categories", "nest_tags", "nest_notifications", "nest_atlas"],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/home/splunk/appDev/TREK/server/src/nest/README.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
