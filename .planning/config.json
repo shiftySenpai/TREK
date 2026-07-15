@@ -1,0 +1,12 @@
+{
+  "project_name": "AI Chatbot Plugin",
+  "workflow_preferences": {
+    "research_phase": "yes",
+    "decision_style": "thorough"
+  },
+  "timeline": "production_mvp_3_4_weeks",
+  "phases": 4,
+  "go_live_phase": 3,
+  "created_at": "2026-07-15",
+  "planning_complete": true
+}
