@@ -17,6 +17,12 @@ Production MVP in 3–4 weeks. Structured as 4 phases with clear dependencies an
 
 **Goal:** Fully functional Trek plugin with basic chat UI and LLM integration. Single round-trip message flow working end-to-end.
 
+**Plans:** 4 plans
+- [ ] 01-01-PLAN.md — Scaffolding & server entry point
+- [ ] 01-02-PLAN.md — LLM client & chat handler
+- [ ] 01-03-PLAN.md — Chat UI (message list, input, theme)
+- [ ] 01-04-PLAN.md — Testing & dev setup
+
 ### Architecture Setup
 
 - **P1.A1** — Project scaffolding
