@@ -484,7 +484,7 @@ describe('transit', () => {
     const url = String(googleFetchMock.mock.calls[0][0]);
     expect(url).toContain('mode=transit');
     expect(url).toContain('alternatives=true');
-    expect(url).toContain('departure_time=1752393600'); // 2026-07-13T08:00:00Z in unix seconds
+    expect(url).toContain('departure_time=1783929600'); // 2026-07-13T08:00:00Z in unix seconds
     expect(url).toContain('transit_mode=train%7Ctram');
   });
 
@@ -546,17 +546,20 @@ describe('transit', () => {
     expect(trainLeg.from).toMatchObject({ name: 'Tokyo', lat: 35.681, lng: 139.767 });
   });
 
+  // NOTE: distinct coordinates per network-reaching test — the module-level cache
+  // is keyed by origin:destination:depSeconds:modes and persists across it() blocks,
+  // so reusing validArgs here would let GDIR-SVC-011's cached success poison these.
   it('GDIR-SVC-012: ZERO_RESULTS resolves to an empty itinerary list', async () => {
     getMapsKeyMock.mockReturnValue('KEY123');
     googleFetchMock.mockResolvedValueOnce(okJson({ status: 'ZERO_RESULTS' }));
-    const r = await transit(1, ...validArgs);
+    const r = await transit(1, '35.00,139.00', '35.10,139.10', '2026-07-13T08:00:00Z');
     expect(r.itineraries).toEqual([]);
   });
 
   it('GDIR-SVC-013: REQUEST_DENIED surfaces as a 401-style error', async () => {
     getMapsKeyMock.mockReturnValue('KEY123');
     googleFetchMock.mockResolvedValueOnce(okJson({ status: 'REQUEST_DENIED' }));
-    await expect(transit(1, ...validArgs)).rejects.toMatchObject({ status: 401 });
+    await expect(transit(1, '40.00,-3.00', '40.10,-3.10', '2026-07-13T08:00:00Z')).rejects.toMatchObject({ status: 401 });
   });
 });
 ```
@@ -1098,6 +1101,42 @@ git commit -m "feat(i18n): add strings for Google Directions routing UI"
 
 ---
 
+## Task 7b: Restore locale key parity (added during execution)
+
+**Why this exists:** the shared `i18n-parity.spec.ts` (run in Task 7) only checks that each
+locale has the same domain *files* as en — it does NOT check key sets. But
+`client/tests/unit/i18n/parity.test.ts` asserts every non-en locale has the *exact*
+same key set as en (missing AND extra must both be empty). Task 7's 4 new en keys
+therefore break that client test across all 19 checked locales. This task adds the 4
+keys to every non-en locale (English placeholder values, pending translation — the
+runtime already falls back to English for missing keys, so this is the standard
+"untranslated new key" state), restoring parity.
+
+**Files:** every non-`en` locale directory under `shared/src/i18n/` that has the
+target domain files: `admin.ts` (+2 keys), `dayplan.ts` (+1 key), `trip.ts` (+1 key).
+
+- [ ] **Step 1: Add the 4 keys to every non-en locale**
+
+For each non-`en` locale dir, insert immediately after the `const <name>: TranslationStrings = {`
+line (order within the flat map is irrelevant):
+- in `admin.ts`: `'admin.googleDirections.title': 'Google Directions Routing',` and `'admin.googleDirections.subtitle': 'Use the Google Directions API for driving routes and public transit itineraries when a user has configured their own Google Maps API key. Disable to save API quota.',`
+- in `dayplan.ts`: `'dayplan.otherTransport': 'Other Transport',`
+- in `trip.ts`: `'transit.estimatedFare': 'Estimated fare',`
+
+- [ ] **Step 2: Verify parity + rebuild**
+
+Run: `cd /home/splunk/appDev/TREK/client && npx vitest run tests/unit/i18n/parity.test.ts` → all locales PASS.
+Run: `cd /home/splunk/appDev/TREK/shared && npm run build` → succeeds.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add shared/src/i18n
+git commit -m "i18n: add Google Directions keys to all locales (English fallback pending translation)"
+```
+
+---
+
 ## Task 8: Admin UI toggle
 
 **Files:**
@@ -1238,8 +1277,11 @@ describe('calculateRouteWithLegs (Google dispatch)', () => {
   })
 
   it('FE-COMP-ROUTECALCULATOR-026: uses OSRM (not Google) when hasMapsKey is false', async () => {
+    // calculateRouteWithLegs uses OSRM_PROFILE_BASE (routing.openstreetmap.de/routed-car),
+    // NOT OSRM_BASE (router.project-osrm.org) — register the matching handler so the OSRM
+    // path resolves from the mock instead of passing through to the real network.
     server.use(
-      http.get(`${OSRM_BASE}/driving/:coords`, () => HttpResponse.json(buildOsrmRouteResponse()))
+      http.get(OSRM_PROFILE_DRIVING_URL, () => HttpResponse.json(buildOsrmRouteResponse()))
     )
     await calculateRouteWithLegs([wp1, wp2], { profile: 'driving' })
     expect(directionsApi.route).not.toHaveBeenCalled()
@@ -1308,9 +1350,10 @@ describe('calculateRouteWithLegs (Google dispatch)', () => {
 })
 ```
 
-Add this constant near the top of the test file, alongside the existing `OSRM_BASE` constant:
+Add these constants near the top of the test file, alongside the existing `OSRM_BASE` constant (`calculateRouteWithLegs` routes through OSRM_PROFILE_BASE — per-profile hosts on routing.openstreetmap.de — not the single OSRM_BASE the older `calculateRoute` tests use):
 
 ```ts
+const OSRM_PROFILE_DRIVING_URL = 'https://routing.openstreetmap.de/routed-car/route/v1/driving/:coords'
 const OSRM_PROFILE_BASE_URL = 'https://routing.openstreetmap.de/routed-bike/route/v1/bike/:coords'
 ```
 
@@ -1505,26 +1548,33 @@ git commit -m "feat(client): widen route profile type to include transit"
 
 **Files:**
 - Modify: `client/src/components/Planner/DayPlanSidebar.tsx`
+- Modify: `client/src/components/Planner/DayPlanSidebarRouteConnector.tsx` (its `RouteConnector`/`HotelRouteConnector` also type `profile` as `'driving' | 'walking'` and receive `routeProfile` — widen both to include `'transit'` or tsc fails)
 - Test: `client/src/components/Planner/DayPlanSidebar.test.tsx`
+
+Note: `DayPlanSidebar` splits into a custom hook `useDayPlanSidebar` (state) + the render function. `hasMapsKey` must be added to the hook's `return {…}` AND the component's destructure so it's in scope where the JSX uses it.
 
 - [ ] **Step 1: Write the failing tests**
 
-Add to `client/src/components/Planner/DayPlanSidebar.test.tsx`, near the end of the `describe('DayPlanSidebar', ...)` block:
+Add to `client/src/components/Planner/DayPlanSidebar.test.tsx`, near the end of the `describe('DayPlanSidebar', ...)` block. IMPORTANT: the route-tools panel (which holds the profile toggle) only renders when the day is routable — `routeToolsRoutable = da.length >= 2 || …` — so each test must seed 2 geo-located places + assignments (mirroring the existing FE-PLANNER-DAYPLAN-099 test), otherwise the whole panel is hidden and the assertions are vacuous/fail. IDs are 106/107 (104/105 already exist in this file):
 
 ```ts
-  it('FE-PLANNER-DAYPLAN-104: the Other Transport button is absent without a Google Maps key', () => {
+  it('FE-PLANNER-DAYPLAN-106: the Other Transport button is absent without a Google Maps key', () => {
+    const places = [buildPlace({ id: 1, name: 'A', lat: 48.85, lng: 2.35 }), buildPlace({ id: 2, name: 'B', lat: 48.86, lng: 2.36 })]
     const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
-    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], selectedDayId: null, showRouteToolsWhenExpanded: true })} />)
+    const assigns = { '10': [buildAssignment({ id: 1, day_id: 10, order_index: 0, place: places[0] }), buildAssignment({ id: 2, day_id: 10, order_index: 1, place: places[1] })] }
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], places, assignments: assigns, selectedDayId: null, showRouteToolsWhenExpanded: true })} />)
     expect(screen.queryByLabelText('Other Transport')).not.toBeInTheDocument()
   })
 
-  it('FE-PLANNER-DAYPLAN-105: the Other Transport button appears and is selectable with a Google Maps key', async () => {
+  it('FE-PLANNER-DAYPLAN-107: the Other Transport button appears and is selectable with a Google Maps key', async () => {
     const user = userEvent.setup()
     seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: true })
     const onSetRouteProfile = vi.fn()
+    const places = [buildPlace({ id: 1, name: 'A', lat: 48.85, lng: 2.35 }), buildPlace({ id: 2, name: 'B', lat: 48.86, lng: 2.36 })]
     const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const assigns = { '10': [buildAssignment({ id: 1, day_id: 10, order_index: 0, place: places[0] }), buildAssignment({ id: 2, day_id: 10, order_index: 1, place: places[1] })] }
     render(<DayPlanSidebar {...makeDefaultProps({
-      days: [day], selectedDayId: null, showRouteToolsWhenExpanded: true, onSetRouteProfile,
+      days: [day], places, assignments: assigns, selectedDayId: null, showRouteToolsWhenExpanded: true, onSetRouteProfile,
     })} />)
     const btn = screen.getByLabelText('Other Transport')
     await user.click(btn)
@@ -1717,7 +1767,7 @@ Run: `cd /home/splunk/appDev/TREK && npm run dev` (the repo-root dev script). Wi
 - [ ] **Step 12: Commit**
 
 ```bash
-git add client/src/components/Planner/DayPlanSidebar.tsx client/src/components/Planner/DayPlanSidebar.test.tsx
+git add client/src/components/Planner/DayPlanSidebar.tsx client/src/components/Planner/DayPlanSidebarRouteConnector.tsx client/src/components/Planner/DayPlanSidebar.test.tsx
 git commit -m "feat(planner): add Other Transport route option, gated on a Google Maps key"
 ```
 
