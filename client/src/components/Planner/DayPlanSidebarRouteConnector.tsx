@@ -2,7 +2,7 @@ import { Car, Footprints, Hotel } from 'lucide-react'
 import type { RouteSegment } from '../../types'
 
 /** Slim travel-time connector shown between two consecutive located stops in a day. */
-export function RouteConnector({ seg, profile }: { seg: RouteSegment; profile: 'driving' | 'walking' }) {
+export function RouteConnector({ seg, profile }: { seg: RouteSegment; profile: 'driving' | 'walking' | 'transit' }) {
   const driving = profile === 'driving'
   const Icon = driving ? Car : Footprints
   const line = { flex: 1, height: 1, minHeight: 1, alignSelf: 'center', background: 'var(--border-primary)' }
@@ -33,7 +33,7 @@ export function HotelRouteConnector({
   placement,
 }: {
   seg: RouteSegment
-  profile: 'driving' | 'walking'
+  profile: 'driving' | 'walking' | 'transit'
   name: string
   placement: 'top' | 'bottom'
 }) {

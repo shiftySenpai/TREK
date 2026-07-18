@@ -4,7 +4,7 @@ declare global { interface Window { __dragData: DragDataPayload | null } }
 
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react'
 import { avatarSrc } from '../../utils/avatarSrc'
-import { ChevronDown, ChevronRight, ChevronUp, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark, TramFront } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark, TramFront, Train } from 'lucide-react'
 import { assignmentsApi, reservationsApi } from '../../api/client'
 import { calculateRoute, calculateRouteWithLegs, optimizeRoute, generateGoogleMapsUrl } from '../Map/RouteCalculator'
 import PlaceAvatar from '../shared/PlaceAvatar'
@@ -16,6 +16,7 @@ import WeatherWidget from '../Weather/WeatherWidget'
 import { useToast } from '../shared/Toast'
 import { getCategoryIcon } from '../shared/categoryIcons'
 import { useTripStore } from '../../store/tripStore'
+import { useAuthStore } from '../../store/authStore'
 import { useCanDo } from '../../store/permissionsStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useAddonStore } from '../../store/addonStore'
@@ -76,9 +77,9 @@ interface DayPlanSidebarProps {
   onAddReservation: (dayId: number) => void
   onNavigateToFiles?: () => void
   routeShown?: boolean
-  routeProfile?: 'driving' | 'walking'
+  routeProfile?: 'driving' | 'walking' | 'transit'
   onToggleRoute?: () => void
-  onSetRouteProfile?: (profile: 'driving' | 'walking') => void
+  onSetRouteProfile?: (profile: 'driving' | 'walking' | 'transit') => void
   onAddPlace?: () => void
   onAddPlaceToDay?: (placeId: number, dayId: number) => void
   onExpandedDaysChange?: (expandedDayIds: Set<number>) => void
@@ -162,6 +163,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
   const tripActions = useRef(useTripStore.getState()).current
   const can = useCanDo()
   const canEditDays = can('day_edit', trip)
+  const hasMapsKey = useAuthStore(s => s.hasMapsKey)
 
   const { noteUi, setNoteUi, noteInputRef, dayNotes, openAddNote: _openAddNote, openEditNote: _openEditNote, cancelNote, saveNote, deleteNote: _deleteNote, moveNote: _moveNote } = useDayNotes(tripId)
 
@@ -449,8 +451,8 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
     // legs to draw. Side-effect free, so the async loop below only does OSRM I/O.
     const planDay = (dayId: number) => {
       const merged = mergedItemsMap[dayId] || []
-      const runs: { id: number; lat: number; lng: number }[][] = []
-      let cur: { id: number; lat: number; lng: number }[] = []
+      const runs: { id: number; lat: number; lng: number; time: string | null }[][] = []
+      let cur: { id: number; lat: number; lng: number; time: string | null }[] = []
       // A run is only a real drive when it holds an actual place. Two back-to-back
       // transports (e.g. two flights on one day) would otherwise pair the first's
       // arrival with the second's departure into a phantom airport→airport leg — the
@@ -458,7 +460,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
       let curHasPlace = false
       for (const it of merged) {
         if (it.type === 'place' && it.data.place?.lat && it.data.place?.lng) {
-          cur.push({ id: it.data.id, lat: it.data.place.lat, lng: it.data.place.lng })
+          cur.push({ id: it.data.id, lat: it.data.place.lat, lng: it.data.place.lng, time: it.data.place.place_time ?? null })
           curHasPlace = true
         } else if (it.type === 'transport') {
           const r = it.data
@@ -466,11 +468,11 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
           if (from || to) {
             // Located transport: route to its departure point, break the run (the
             // flight/train itself isn't driven), and let its arrival start the next.
-            if (from) cur.push({ id: r.id, lat: from.lat, lng: from.lng })
+            if (from) cur.push({ id: r.id, lat: from.lat, lng: from.lng, time: null })
             if (cur.length >= 2 && curHasPlace) runs.push(cur)
             cur = []
             curHasPlace = false
-            if (to) cur.push({ id: r.id, lat: to.lat, lng: to.lng })
+            if (to) cur.push({ id: r.id, lat: to.lat, lng: to.lng, time: null })
           } else if (cur.length > 0 && !(r.type === 'car' && getSpanPhase(r, dayId) === 'middle')) {
             // No location: ignore for routing, but attribute the through-leg to the
             // booking so its distance/duration shows under it (purely cosmetic).
@@ -532,7 +534,8 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
         const dayLegs: Record<number, RouteSegment> = {}
         for (const run of runs) {
           try {
-            const r = await calculateRouteWithLegs(run.map(p => ({ lat: p.lat, lng: p.lng })), { signal: controller.signal, profile: routeProfile })
+            const departureTime = routeProfile === 'transit' ? (run[0]?.time ?? undefined) : undefined
+            const r = await calculateRouteWithLegs(run.map(p => ({ lat: p.lat, lng: p.lng })), { signal: controller.signal, profile: routeProfile, departureTime })
             r.legs.forEach((leg, i) => { dayLegs[run[i].id] = leg })
           } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') return
@@ -1058,6 +1061,7 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
     tripActions,
     can,
     canEditDays,
+    hasMapsKey,
     noteUi,
     setNoteUi,
     noteInputRef,
@@ -1229,6 +1233,7 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
     tripActions,
     can,
     canEditDays,
+    hasMapsKey,
     noteUi,
     setNoteUi,
     noteInputRef,
@@ -2436,14 +2441,14 @@ const DayPlanSidebar = React.memo(function DayPlanSidebar(props: DayPlanSidebarP
                           {t('dayplan.optimize')}
                         </button>
                         <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-faint)', flexShrink: 0 }}>
-                          {(['driving', 'walking'] as const).map(p => {
-                            const ModeIcon = p === 'driving' ? Car : Footprints
+                          {(hasMapsKey ? (['driving', 'walking', 'transit'] as const) : (['driving', 'walking'] as const)).map(p => {
+                            const ModeIcon = p === 'driving' ? Car : p === 'walking' ? Footprints : Train
                             const active = routeProfile === p
                             return (
                               <button
                                 key={p}
                                 onClick={() => onSetRouteProfile?.(p)}
-                                aria-label={p === 'driving' ? 'Driving' : 'Walking'}
+                                aria-label={p === 'driving' ? 'Driving' : p === 'walking' ? 'Walking' : t('dayplan.otherTransport')}
                                 className={active ? 'bg-accent text-accent-text' : 'bg-transparent text-content-secondary'}
                                 style={{
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',

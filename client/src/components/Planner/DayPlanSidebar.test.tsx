@@ -2022,7 +2022,7 @@ describe('DayPlanSidebar', () => {
     expect(await screen.findByText('2000 m')).toBeInTheDocument()
   })
 
-  it('FE-PLANNER-DAYPLAN-106: leg distance survives a car rental on its middle days (#1504)', async () => {
+  it('FE-PLANNER-DAYPLAN-104: leg distance survives a car rental on its middle days (#1504)', async () => {
     const user = userEvent.setup()
     const { calculateRouteWithLegs } = await import('../Map/RouteCalculator')
     vi.mocked(calculateRouteWithLegs as any).mockImplementation((wp: any) => Promise.resolve({
@@ -2057,5 +2057,28 @@ describe('DayPlanSidebar', () => {
     // Only day 2 has places, so it renders the sole Route toggle.
     await user.click(screen.getByRole('button', { name: 'Route' }))
     expect(await screen.findByText('2 km')).toBeInTheDocument()
+  })
+
+  it('FE-PLANNER-DAYPLAN-105: the Other Transport button is absent without a Google Maps key', () => {
+    const places = [buildPlace({ id: 1, name: 'A', lat: 48.85, lng: 2.35 }), buildPlace({ id: 2, name: 'B', lat: 48.86, lng: 2.36 })]
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const assigns = { '10': [buildAssignment({ id: 1, day_id: 10, order_index: 0, place: places[0] }), buildAssignment({ id: 2, day_id: 10, order_index: 1, place: places[1] })] }
+    render(<DayPlanSidebar {...makeDefaultProps({ days: [day], places, assignments: assigns, selectedDayId: null, showRouteToolsWhenExpanded: true })} />)
+    expect(screen.queryByLabelText('Other Transport')).not.toBeInTheDocument()
+  })
+
+  it('FE-PLANNER-DAYPLAN-106: the Other Transport button appears and is selectable with a Google Maps key', async () => {
+    const user = userEvent.setup()
+    seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: true })
+    const onSetRouteProfile = vi.fn()
+    const places = [buildPlace({ id: 1, name: 'A', lat: 48.85, lng: 2.35 }), buildPlace({ id: 2, name: 'B', lat: 48.86, lng: 2.36 })]
+    const day = buildDay({ id: 10, date: '2025-06-01', title: 'Day 1' })
+    const assigns = { '10': [buildAssignment({ id: 1, day_id: 10, order_index: 0, place: places[0] }), buildAssignment({ id: 2, day_id: 10, order_index: 1, place: places[1] })] }
+    render(<DayPlanSidebar {...makeDefaultProps({
+      days: [day], places, assignments: assigns, selectedDayId: null, showRouteToolsWhenExpanded: true, onSetRouteProfile,
+    })} />)
+    const btn = screen.getByLabelText('Other Transport')
+    await user.click(btn)
+    expect(onSetRouteProfile).toHaveBeenCalledWith('transit')
   })
 })
