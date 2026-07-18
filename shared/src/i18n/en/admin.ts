@@ -163,6 +163,9 @@ const admin: TranslationStrings = {
   'admin.placesDetails.title': 'Place Details',
   'admin.placesDetails.subtitle':
     'Fetch detailed place information (hours, rating, website) from the Google Places API. Disable to save API quota.',
+  'admin.googleDirections.title': 'Google Directions Routing',
+  'admin.googleDirections.subtitle':
+    'Use the Google Directions API for driving routes and public transit itineraries when a user has configured their own Google Maps API key. Disable to save API quota.',
   'admin.bagTracking.title': 'Bag Tracking',
   'admin.bagTracking.subtitle': 'Enable weight and bag assignment for packing items',
   'admin.collab.chat.title': 'Chat',
