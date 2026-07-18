@@ -114,10 +114,10 @@ describe('transit', () => {
     googleFetchMock.mockResolvedValueOnce(okJson({
       status: 'OK',
       routes: [{
+        fare: { value: 4720, currency: 'JPY' },
         legs: [{
           distance: { value: 6000 },
           duration: { value: 2400 },
-          fare: { value: 4720, currency: 'JPY' },
           steps: [
             {
               travel_mode: 'WALKING',
@@ -181,5 +181,19 @@ describe('transit', () => {
     getMapsKeyMock.mockReturnValue('KEY123');
     googleFetchMock.mockResolvedValueOnce(okJson({ status: 'REQUEST_DENIED' }));
     await expect(transit(1, '40.00,-3.00', '40.10,-3.10', '2026-07-13T08:00:00Z')).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('GDIR-SVC-015: a route without a fare maps to fare: null', async () => {
+    getMapsKeyMock.mockReturnValue('KEY123');
+    googleFetchMock.mockResolvedValueOnce(okJson({
+      status: 'OK',
+      routes: [{
+        legs: [{ duration: { value: 600 }, steps: [
+          { travel_mode: 'TRANSIT', duration: { value: 600 }, transit_details: { line: { short_name: 'X', vehicle: { type: 'BUS' } }, departure_stop: { name: 'A', location: { lat: 1, lng: 2 } }, arrival_stop: { name: 'B', location: { lat: 3, lng: 4 } }, departure_time: { value: 1752393000 }, arrival_time: { value: 1752393600 }, num_stops: 1 } },
+        ] }],
+      }],
+    }));
+    const r = await transit(1, '60.00,25.00', '60.10,25.10', '2026-07-13T08:00:00Z');
+    expect(r.itineraries[0].fare).toBeNull();
   });
 });

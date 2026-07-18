@@ -47,10 +47,10 @@ interface GoogleDirectionsResponse {
   status: string;
   routes?: Array<{
     overview_polyline?: { points?: string };
+    fare?: { value?: number; currency?: string };
     legs?: Array<{
       distance?: { value?: number };
       duration?: { value?: number };
-      fare?: { value?: number; currency?: string };
       steps?: GoogleStep[];
     }>;
   }>;
@@ -178,7 +178,7 @@ function mapRoute(googleRoute: NonNullable<GoogleDirectionsResponse['routes']>[n
     duration: leg.duration?.value ?? 0,
     transfers: Math.max(0, transitLegs.length - 1),
     walkSeconds: legs.filter(l => l.mode === 'WALK').reduce((a, l) => a + l.duration, 0),
-    fare: leg.fare?.value != null && leg.fare.currency ? { amount: leg.fare.value, currency: leg.fare.currency } : null,
+    fare: googleRoute.fare?.value != null && googleRoute.fare.currency ? { amount: googleRoute.fare.value, currency: googleRoute.fare.currency } : null,
     legs,
   };
 }
