@@ -472,7 +472,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
         notes: null,
         metadata: {
           transit: {
-            provider: 'transitous',
+            provider: hasMapsKey ? 'google' : 'transitous',
             duration: it.duration,
             transfers: it.transfers,
             walk_seconds: it.walkSeconds,
@@ -621,10 +621,12 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
                 t={t}
               />
             ))}
-            <div className="text-content-faint" style={{ fontSize: 'calc(10.5px * var(--fs-scale-caption, 1))', textAlign: 'center', marginTop: 2 }}>
-              {t('transit.attribution')}{' '}
-              <a href="https://transitous.org/sources/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Transitous</a>
-            </div>
+            {!hasMapsKey && (
+              <div className="text-content-faint" style={{ fontSize: 'calc(10.5px * var(--fs-scale-caption, 1))', textAlign: 'center', marginTop: 2 }}>
+                {t('transit.attribution')}{' '}
+                <a href="https://transitous.org/sources/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Transitous</a>
+              </div>
+            )}
           </div>
         )}
       </div>

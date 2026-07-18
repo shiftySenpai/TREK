@@ -3,6 +3,7 @@ interface DragDataPayload { placeId?: string; assignmentId?: string; noteId?: st
 declare global { interface Window { __dragData: DragDataPayload | null } }
 
 import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react'
+import tzlookup from 'tz-lookup'
 import { avatarSrc } from '../../utils/avatarSrc'
 import { ChevronDown, ChevronRight, ChevronUp, Navigation, RotateCcw, ExternalLink, Clock, Pencil, GripVertical, Ticket, Plus, FileText, Trash2, Car, Lock, Hotel, Footprints, Route as RouteIcon, Bookmark, TramFront, Train } from 'lucide-react'
 import { assignmentsApi, reservationsApi } from '../../api/client'
@@ -43,6 +44,17 @@ import { TransitTitle, TransitLegChips, TransitItineraryInline } from './transit
 import { DayPlanSidebarFooter } from './DayPlanSidebarFooter'
 import type { Trip, Day, Place, Category, Assignment, Accommodation, Reservation, AssignmentsMap, RouteResult, RouteSegment, DayNote } from '../../types'
 import { getGoogleMapsUrlForPlace } from './placeGoogleMaps'
+
+function tzAt(lat: number, lng: number): string {
+  try { return tzlookup(lat, lng) } catch { return 'UTC' }
+}
+/** 'YYYY-MM-DD' + 'HH:mm' in an IANA zone → UTC ISO string. */
+function localToUtcIso(dateStr: string, timeStr: string, tz: string): string {
+  const naive = Date.parse(`${dateStr}T${timeStr}:00Z`)
+  const inTz = new Date(new Date(naive).toLocaleString('en-US', { timeZone: tz })).getTime()
+  const inUtc = new Date(new Date(naive).toLocaleString('en-US', { timeZone: 'UTC' })).getTime()
+  return new Date(naive - (inTz - inUtc)).toISOString()
+}
 
 interface DayPlanSidebarProps {
   tripId: number
@@ -534,7 +546,11 @@ function useDayPlanSidebar(props: DayPlanSidebarProps) {
         const dayLegs: Record<number, RouteSegment> = {}
         for (const run of runs) {
           try {
-            const departureTime = routeProfile === 'transit' ? (run[0]?.time ?? undefined) : undefined
+            let departureTime: string | undefined
+            if (routeProfile === 'transit' && run[0]?.time) {
+              const runDate = days.find(d => d.id === dayId)?.date
+              departureTime = runDate ? localToUtcIso(runDate, run[0].time, tzAt(run[0].lat, run[0].lng)) : undefined
+            }
             const r = await calculateRouteWithLegs(run.map(p => ({ lat: p.lat, lng: p.lng })), { signal: controller.signal, profile: routeProfile, departureTime })
             r.legs.forEach((leg, i) => { dayLegs[run[i].id] = leg })
           } catch (err) {

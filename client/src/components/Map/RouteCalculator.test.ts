@@ -196,6 +196,30 @@ describe('calculateRouteWithLegs (Google dispatch)', () => {
     vi.mocked(directionsApi.transit).mockResolvedValue({ itineraries: [] })
     await expect(calculateRouteWithLegs([wp1, wp2], { profile: 'transit' })).rejects.toThrow('No route found')
   })
+
+  it('FE-COMP-ROUTECALCULATOR-033: driving falls back to OSRM when directions are disabled admin-side', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.route).mockResolvedValue({ disabled: true } as any)
+    server.use(
+      http.get(OSRM_PROFILE_DRIVING_URL, () => HttpResponse.json(buildOsrmRouteResponse(5000, 600)))
+    )
+    const r = await calculateRouteWithLegs([wp1, wp2], { profile: 'driving' })
+    expect(r.distance).toBe(5000) // OSRM value, not NaN from the disabled response
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-034: transit throws (no leg) when directions are disabled admin-side', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.transit).mockResolvedValue({ disabled: true } as any)
+    await expect(calculateRouteWithLegs([wp1, wp2], { profile: 'transit' })).rejects.toThrow()
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-035: a non-ISO departureTime falls back to now instead of erroring', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.transit).mockResolvedValue({ itineraries: [{ startTime: 'x', endTime: 'y', duration: 1, transfers: 0, walkSeconds: 0, fare: null, legs: [] }] })
+    await calculateRouteWithLegs([wp1, wp2], { profile: 'transit', departureTime: '09:00' })
+    const passedTime = vi.mocked(directionsApi.transit).mock.calls[0][2]
+    expect(Number.isNaN(Date.parse(passedTime))).toBe(false) // converted to a valid ISO (now), not the bare "09:00"
+  })
 })
 
 // ── calculateSegments ──────────────────────────────────────────────────────────

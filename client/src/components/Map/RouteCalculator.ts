@@ -5,6 +5,9 @@ import { decodePolyline } from './transitGeometry'
 import { directionsApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 
+/** Thrown when the admin kill-switch (`directions_enabled`) is off and the server returns `{ disabled: true }`. */
+class DirectionsDisabledError extends Error {}
+
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1'
 
 // FOSSGIS hosts OSRM with real per-profile routing (car/foot/bike) — the
@@ -241,6 +244,7 @@ async function calculateGoogleRouteWithLegs(
     const a = waypoints[i]
     const b = waypoints[i + 1]
     const r = await directionsApi.route(`${a.lat},${a.lng}`, `${b.lat},${b.lng}`, profile)
+    if (r && typeof r === 'object' && 'disabled' in r) throw new DirectionsDisabledError()
     const legCoords = r.polyline ? decodePolyline(r.polyline, 5) : []
     coordinates.push(...(i === 0 ? legCoords : legCoords.slice(1)))
     distance += r.distance
@@ -266,11 +270,12 @@ async function calculateTransitRouteWithLegs(
   const legs: RouteSegment[] = []
   let distance = 0
   let duration = 0
-  const depTime = departureTime || new Date().toISOString()
+  const depTime = departureTime && !Number.isNaN(Date.parse(departureTime)) ? departureTime : new Date().toISOString()
   for (let i = 0; i < waypoints.length - 1; i++) {
     const a = waypoints[i]
     const b = waypoints[i + 1]
     const r = await directionsApi.transit(`${a.lat},${a.lng}`, `${b.lat},${b.lng}`, depTime, undefined)
+    if (r && typeof r === 'object' && 'disabled' in r) throw new DirectionsDisabledError()
     const itinerary = r.itineraries[0]
     if (!itinerary) throw new Error('No route found')
     for (const leg of itinerary.legs) {
@@ -310,7 +315,12 @@ export async function calculateRouteWithLegs(
   }
 
   if ((profile === 'driving' || profile === 'walking') && useAuthStore.getState().hasMapsKey) {
-    return calculateGoogleRouteWithLegs(waypoints, profile)
+    try {
+      return await calculateGoogleRouteWithLegs(waypoints, profile)
+    } catch (e) {
+      if (!(e instanceof DirectionsDisabledError)) throw e
+      // Admin disabled Google Directions app-wide → fall through to the OSRM path below.
+    }
   }
 
   const coords = waypoints.map((p) => `${p.lng},${p.lat}`).join(';')
