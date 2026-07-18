@@ -1,6 +1,9 @@
 import { useSettingsStore } from '../../store/settingsStore'
 import type { DistanceUnit, RouteResult, RouteSegment, RouteWithLegs, Waypoint, RouteAnchors } from '../../types'
 import { formatDistance } from '../../utils/units'
+import { decodePolyline } from './transitGeometry'
+import { directionsApi } from '../../api/client'
+import { useAuthStore } from '../../store/authStore'
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1'
 
@@ -225,6 +228,69 @@ export async function calculateSegments(
   })
 }
 
+/** One Google Directions call per consecutive waypoint pair (driving/walking); stitched into one RouteWithLegs. */
+async function calculateGoogleRouteWithLegs(
+  waypoints: Waypoint[],
+  profile: 'driving' | 'walking',
+): Promise<RouteWithLegs> {
+  const coordinates: [number, number][] = []
+  const legs: RouteSegment[] = []
+  let distance = 0
+  let duration = 0
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const a = waypoints[i]
+    const b = waypoints[i + 1]
+    const r = await directionsApi.route(`${a.lat},${a.lng}`, `${b.lat},${b.lng}`, profile)
+    const legCoords = r.polyline ? decodePolyline(r.polyline, 5) : []
+    coordinates.push(...(i === 0 ? legCoords : legCoords.slice(1)))
+    distance += r.distance
+    duration += r.duration
+    const mid: [number, number] = [(a.lat + b.lat) / 2, (a.lng + b.lng) / 2]
+    const durationText = formatDuration(r.duration)
+    legs.push({
+      mid, from: [a.lat, a.lng], to: [b.lat, b.lng],
+      distance: r.distance, duration: r.duration,
+      walkingText: durationText, drivingText: durationText,
+      distanceText: formatRouteDistance(r.distance), durationText,
+    })
+  }
+  return { coordinates, distance, duration, legs }
+}
+
+/** One Google transit itinerary lookup per consecutive waypoint pair, taking each pair's top-ranked result. */
+async function calculateTransitRouteWithLegs(
+  waypoints: Waypoint[],
+  departureTime: string | undefined,
+): Promise<RouteWithLegs> {
+  const coordinates: [number, number][] = []
+  const legs: RouteSegment[] = []
+  let distance = 0
+  let duration = 0
+  const depTime = departureTime || new Date().toISOString()
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const a = waypoints[i]
+    const b = waypoints[i + 1]
+    const r = await directionsApi.transit(`${a.lat},${a.lng}`, `${b.lat},${b.lng}`, depTime, undefined)
+    const itinerary = r.itineraries[0]
+    if (!itinerary) throw new Error('No route found')
+    for (const leg of itinerary.legs) {
+      if (leg.geometry) coordinates.push(...decodePolyline(leg.geometry, leg.geometryPrecision))
+    }
+    const legDistance = itinerary.legs.reduce((s, l) => s + (l.distance ?? 0), 0)
+    distance += legDistance
+    duration += itinerary.duration
+    const mid: [number, number] = [(a.lat + b.lat) / 2, (a.lng + b.lng) / 2]
+    const durationText = formatDuration(itinerary.duration)
+    legs.push({
+      mid, from: [a.lat, a.lng], to: [b.lat, b.lng],
+      distance: legDistance, duration: itinerary.duration,
+      walkingText: durationText, drivingText: durationText,
+      distanceText: formatRouteDistance(legDistance), durationText,
+    })
+  }
+  return { coordinates, distance, duration, legs }
+}
+
 /**
  * One OSRM call per waypoint-run that returns BOTH the real road geometry (for the
  * map) and per-leg distance/duration (for the sidebar connectors). Results are cached
@@ -233,10 +299,18 @@ export async function calculateSegments(
  */
 export async function calculateRouteWithLegs(
   waypoints: Waypoint[],
-  { signal, profile = 'driving' }: { signal?: AbortSignal; profile?: 'driving' | 'walking' | 'cycling' } = {}
+  { signal, profile = 'driving', departureTime }: { signal?: AbortSignal; profile?: 'driving' | 'walking' | 'cycling' | 'transit'; departureTime?: string } = {}
 ): Promise<RouteWithLegs> {
   if (!waypoints || waypoints.length < 2) {
     return { coordinates: [], distance: 0, duration: 0, legs: [] }
+  }
+
+  if (profile === 'transit') {
+    return calculateTransitRouteWithLegs(waypoints, departureTime)
+  }
+
+  if ((profile === 'driving' || profile === 'walking') && useAuthStore.getState().hasMapsKey) {
+    return calculateGoogleRouteWithLegs(waypoints, profile)
   }
 
   const coords = waypoints.map((p) => `${p.lng},${p.lat}`).join(';')

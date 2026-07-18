@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../../tests/helpers/msw/server'
 import {
@@ -8,8 +8,17 @@ import {
   generateGoogleMapsUrl,
   withHotelBookends,
 } from './RouteCalculator'
+import { directionsApi } from '../../api/client'
+import { useAuthStore } from '../../store/authStore'
+import { calculateRouteWithLegs } from './RouteCalculator'
+
+vi.mock('../../api/client', () => ({
+  directionsApi: { route: vi.fn(), transit: vi.fn() },
+}))
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1'
+const OSRM_PROFILE_DRIVING_URL = 'https://routing.openstreetmap.de/routed-car/route/v1/driving/:coords'
+const OSRM_PROFILE_BASE_URL = 'https://routing.openstreetmap.de/routed-bike/route/v1/bike/:coords'
 
 const buildOsrmRouteResponse = (distance = 5000, duration = 360) => ({
   code: 'Ok',
@@ -104,6 +113,88 @@ describe('calculateRoute', () => {
     const controller = new AbortController()
     controller.abort()
     await expect(calculateRoute([wp1, wp2], 'driving', { signal: controller.signal })).rejects.toThrow()
+  })
+})
+
+// ── calculateRouteWithLegs (Google dispatch) ────────────────────────────────────
+
+describe('calculateRouteWithLegs (Google dispatch)', () => {
+  beforeEach(() => {
+    vi.mocked(directionsApi.route).mockReset()
+    vi.mocked(directionsApi.transit).mockReset()
+    useAuthStore.setState({ hasMapsKey: false } as any)
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-026: uses OSRM (not Google) when hasMapsKey is false', async () => {
+    // calculateRouteWithLegs uses OSRM_PROFILE_BASE (routing.openstreetmap.de/routed-car),
+    // NOT OSRM_BASE (router.project-osrm.org) — register the matching handler so the OSRM
+    // path resolves from the mock instead of passing through to the real network.
+    server.use(
+      http.get(OSRM_PROFILE_DRIVING_URL, () => HttpResponse.json(buildOsrmRouteResponse()))
+    )
+    await calculateRouteWithLegs([wp1, wp2], { profile: 'driving' })
+    expect(directionsApi.route).not.toHaveBeenCalled()
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-027: dispatches driving/walking to Google when hasMapsKey is true', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.route).mockResolvedValue({ distance: 5000, duration: 600, polyline: null })
+    const r = await calculateRouteWithLegs([wp1, wp2], { profile: 'driving' })
+    expect(directionsApi.route).toHaveBeenCalledWith(`${wp1.lat},${wp1.lng}`, `${wp2.lat},${wp2.lng}`, 'driving')
+    expect(r.distance).toBe(5000)
+    expect(r.duration).toBe(600)
+    expect(r.legs).toHaveLength(1)
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-028: decodes the returned polyline into coordinates', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    // Encoded polyline for [[38.5,-120.2],[40.7,-120.95]] at precision 5 (Google's standard example).
+    vi.mocked(directionsApi.route).mockResolvedValue({ distance: 1000, duration: 100, polyline: '_p~iF~ps|U_ulLnnqC' })
+    const r = await calculateRouteWithLegs([wp1, wp2], { profile: 'driving' })
+    expect(r.coordinates.length).toBeGreaterThan(0)
+    expect(r.coordinates[0][0]).toBeCloseTo(38.5, 3)
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-029: cycling always stays on OSRM regardless of hasMapsKey', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    server.use(
+      http.get(`${OSRM_PROFILE_BASE_URL}`, () => HttpResponse.json(buildOsrmRouteResponse()))
+    )
+    await calculateRouteWithLegs([wp1, wp2], { profile: 'cycling' })
+    expect(directionsApi.route).not.toHaveBeenCalled()
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-030: transit profile always calls the Google transit endpoint, never OSRM', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.transit).mockResolvedValue({
+      itineraries: [{
+        startTime: '2026-07-13T08:00:00Z', endTime: '2026-07-13T08:40:00Z', duration: 2400,
+        transfers: 0, walkSeconds: 0, fare: { amount: 4720, currency: 'JPY' },
+        legs: [{
+          mode: 'HEAVY_RAIL', from: { name: 'A', lat: wp1.lat, lng: wp1.lng, time: null, scheduledTime: null, track: null },
+          to: { name: 'B', lat: wp2.lat, lng: wp2.lng, time: null, scheduledTime: null, track: null },
+          duration: 2400, distance: 5000, headsign: null, line: 'Local', lineColor: null, lineTextColor: null,
+          agency: null, intermediateStops: 3, geometry: null, geometryPrecision: 5,
+        }],
+      }],
+    })
+    const r = await calculateRouteWithLegs([wp1, wp2], { profile: 'transit' })
+    expect(directionsApi.transit).toHaveBeenCalled()
+    expect(r.duration).toBe(2400)
+    expect(r.legs[0].durationText).toBeTruthy()
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-031: transit profile passes the given departureTime through', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.transit).mockResolvedValue({ itineraries: [{ startTime: 'x', endTime: 'y', duration: 1, transfers: 0, walkSeconds: 0, fare: null, legs: [] }] })
+    await calculateRouteWithLegs([wp1, wp2], { profile: 'transit', departureTime: '2026-07-13T09:00:00Z' })
+    expect(directionsApi.transit).toHaveBeenCalledWith(`${wp1.lat},${wp1.lng}`, `${wp2.lat},${wp2.lng}`, '2026-07-13T09:00:00Z', undefined)
+  })
+
+  it('FE-COMP-ROUTECALCULATOR-032: transit profile throws when Google returns no itinerary', async () => {
+    useAuthStore.setState({ hasMapsKey: true } as any)
+    vi.mocked(directionsApi.transit).mockResolvedValue({ itineraries: [] })
+    await expect(calculateRouteWithLegs([wp1, wp2], { profile: 'transit' })).rejects.toThrow('No route found')
   })
 })
 
