@@ -27,8 +27,9 @@ API, wired into the two places TREK currently generates routes:
   Google Directions instead of OSRM/Transitous, transparently.
 - Users without a key see zero change — OSRM/Transitous remains the default,
   untouched code path.
-- The day-view toggle gains a third **Train** option (Google transit),
-  visible only when a key is present.
+- The day-view toggle gains a third **Other Transport** option (Google
+  transit — bus/subway/tram/rail/ferry, not just trains), icon-only like the
+  existing Car/Footprints buttons, visible only when a key is present.
 - Admin can kill Google-routing app-wide via a new setting, independent of
   whether individual users have keys (cost-control lever).
 - Responses are cached briefly to reduce billed request volume from
@@ -156,13 +157,17 @@ Mirrors the shape of `transitService.ts`.
 ### `client/src/components/Planner/DayPlanSidebar.tsx`
 
 - Profile toggle's mode list becomes conditional:
-  `hasMapsKey ? ['driving', 'walking', 'train'] : ['driving', 'walking']`.
+  `hasMapsKey ? ['driving', 'walking', 'transit'] : ['driving', 'walking']`,
+  appended to the existing segmented group — the Route/Google-Maps-export/
+  Optimize buttons to its left are unchanged.
 - `Train` icon from `lucide-react` (already used elsewhere in the app, e.g.
-  `TransportModal.tsx`) for visual consistency with the rest of TREK's
-  transport iconography.
-- Selecting `train` routes through `calculateRouteWithLegs(waypoints, { profile: 'train' })`.
-  The `train` profile always calls the Google transit proxy — no OSRM
-  fallback exists for trains, so this option simply doesn't render without a
+  `TransportModal.tsx`) for the button glyph; `aria-label="Other Transport"`
+  (not "Train" — Google transit covers bus/subway/tram/rail/ferry, so the
+  label stays general even though the icon reads as a train). Icon-only, no
+  visible text label, matching the existing Car/Footprints buttons exactly.
+- Selecting `transit` routes through `calculateRouteWithLegs(waypoints, { profile: 'transit' })`.
+  The `transit` profile always calls the Google transit proxy — no OSRM
+  fallback exists for it, so this option simply doesn't render without a
   key.
 - Departure time for the transit call: the leading place's `place_time` if
   set on that day, else `new Date()` at call time.
@@ -174,12 +179,15 @@ Mirrors the shape of `transitService.ts`.
     `DirectionsTransitItinerary[]` into the existing `TransitItinerary[]`
     shape via one mapping function local to this file.
   - Transitous path: unchanged, calls `transitApi.plan(...)` as today.
-- Mode-filter chips (`MODE_GROUPS`) stay visible in both cases. On the
-  Google path, the active chip set is collapsed to a single best-effort
-  `transit_mode` value passed to `directionsApi.transit` (Google only
-  accepts one; TREK's finer groups map onto Google's `bus|subway|train|
-  tram|rail`, dropping ferry/cable which Google's `transit_mode` doesn't
-  support — those chips are simply inert on the Google path).
+- Mode-filter chips (`MODE_GROUPS`) stay visible in both cases. Google's
+  `transit_mode` param accepts multiple pipe-separated values
+  (`transit_mode=train|tram|subway`), so the active chip set maps
+  one-for-one: `rail→train`, `subway→subway`, `tram→tram`, `bus→bus`,
+  joined with `|`. `ferry`/`cable` have no Google equivalent and are
+  dropped from the param (those two chips are inert on the Google path —
+  toggling them doesn't change the request). When all chips are active
+  (the default), the param is omitted entirely, same as the Transitous
+  path's `allModes` case.
 - Everything downstream (`ItineraryCard`, `pref` ranking, `addItinerary`)
   is untouched — it only consumes the common `TransitItinerary` shape.
   `fare`, when present, renders as an additional line on `ItineraryCard`
