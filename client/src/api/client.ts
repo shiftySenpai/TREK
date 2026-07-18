@@ -998,6 +998,16 @@ export const transitApi = {
     apiClient.get('/transit/plan', { params }).then(r => r.data),
 }
 
+// Google Directions routing (BYO key) — driving/walking routes and transit
+// itinerary search, mirroring transitApi's shape. The client dispatches to
+// this instead of OSRM/Transitous purely based on useAuthStore().hasMapsKey.
+export const directionsApi = {
+  route: (origin: string, destination: string, mode: 'driving' | 'walking') =>
+    apiClient.get('/maps/directions', { params: { origin, destination, mode } }).then(r => r.data),
+  transit: (origin: string, destination: string, time: string, transitMode?: string) =>
+    apiClient.get('/maps/directions/transit', { params: { origin, destination, time, transitMode } }).then(r => r.data),
+}
+
 // Trip invite links (#1143) — join a trip as an existing, logged-in user.
 export const tripInviteApi = {
   getLink: (tripId: number | string) => apiClient.get(`/trips/${tripId}/invite-link`).then(r => r.data),
