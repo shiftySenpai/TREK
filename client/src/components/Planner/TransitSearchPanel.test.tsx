@@ -8,13 +8,14 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { buildUser, buildDay, buildPlace } from '../../../tests/helpers/factories'
 import TransitSearchPanel from './TransitSearchPanel'
 
-const { transitApiMock } = vi.hoisted(() => ({
+const { transitApiMock, directionsApiMock } = vi.hoisted(() => ({
   transitApiMock: { geocode: vi.fn(), plan: vi.fn() },
+  directionsApiMock: { route: vi.fn(), transit: vi.fn() },
 }))
 
 vi.mock('../../api/client', async (importOriginal) => {
   const actual = await importOriginal() as object
-  return { ...actual, transitApi: transitApiMock }
+  return { ...actual, transitApi: transitApiMock, directionsApi: directionsApiMock }
 })
 
 vi.mock('../shared/Toast', () => ({ useToast: () => ({ error: vi.fn(), success: vi.fn() }) }))
@@ -198,5 +199,61 @@ describe('TransitSearchPanel', () => {
     const inputs = screen.getAllByPlaceholderText('Search stop or station…')
     expect((inputs[0] as HTMLInputElement).value).toBe('')
     expect((inputs[1] as HTMLInputElement).value).toBe('Fernsehturm')
+  })
+
+  it('FE-PLANNER-TRANSIT-007: with a Google Maps key, searching calls directionsApi.transit instead of transitApi.plan', async () => {
+    const user = userEvent.setup()
+    seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: true })
+    directionsApiMock.transit.mockResolvedValueOnce({
+      itineraries: [{
+        startTime: '2025-06-01T06:30:00Z', endTime: '2025-06-01T07:00:00Z', duration: 1800,
+        transfers: 0, walkSeconds: 0, fare: { amount: 4720, currency: 'JPY' },
+        legs: [{
+          mode: 'HEAVY_RAIL', from: { name: 'Fernsehturm', lat: 52.5208, lng: 13.4094, time: null, scheduledTime: null, track: null },
+          to: { name: 'Zoologischer Garten', lat: 52.507, lng: 13.332, time: null, scheduledTime: null, track: null },
+          duration: 1800, distance: 5000, headsign: null, line: 'Local', lineColor: null, lineTextColor: null,
+          agency: null, intermediateStops: 3, geometry: null, geometryPrecision: 5,
+        }],
+      }],
+    })
+    render(<TransitSearchPanel {...makeProps()} />)
+    await pickFromAndTo(user)
+    await user.click(screen.getByRole('button', { name: /^Search$/ }))
+    expect(await screen.findByText(/08:30 – 09:00/)).toBeInTheDocument()
+    expect(transitApiMock.plan).not.toHaveBeenCalled()
+    expect(directionsApiMock.transit).toHaveBeenCalled()
+  })
+
+  it('FE-PLANNER-TRANSIT-008: a Google-sourced itinerary with a fare shows the fare row when expanded', async () => {
+    const user = userEvent.setup()
+    seedStore(useAuthStore, { user: buildUser(), isAuthenticated: true, hasMapsKey: true })
+    directionsApiMock.transit.mockResolvedValueOnce({
+      itineraries: [{
+        startTime: '2025-06-01T06:30:00Z', endTime: '2025-06-01T07:00:00Z', duration: 1800,
+        transfers: 0, walkSeconds: 0, fare: { amount: 4720, currency: 'JPY' },
+        legs: [{
+          mode: 'HEAVY_RAIL', from: { name: 'Fernsehturm', lat: 52.5208, lng: 13.4094, time: null, scheduledTime: null, track: null },
+          to: { name: 'Zoologischer Garten', lat: 52.507, lng: 13.332, time: null, scheduledTime: null, track: null },
+          duration: 1800, distance: 5000, headsign: null, line: 'Local', lineColor: null, lineTextColor: null,
+          agency: null, intermediateStops: 3, geometry: null, geometryPrecision: 5,
+        }],
+      }],
+    })
+    render(<TransitSearchPanel {...makeProps()} />)
+    await pickFromAndTo(user)
+    await user.click(screen.getByRole('button', { name: /^Search$/ }))
+    await user.click(await screen.findByText(/08:30 – 09:00/))
+    expect(await screen.findByText('Estimated fare')).toBeInTheDocument()
+    expect(screen.getByText(/4720|4,720/)).toBeInTheDocument()
+  })
+
+  it('FE-PLANNER-TRANSIT-009: without a Google Maps key, searching still calls transitApi.plan (unchanged)', async () => {
+    const user = userEvent.setup()
+    transitApiMock.plan.mockResolvedValueOnce({ itineraries: [ITINERARY] })
+    render(<TransitSearchPanel {...makeProps()} />)
+    await pickFromAndTo(user)
+    await user.click(screen.getByRole('button', { name: /^Search$/ }))
+    expect(await screen.findByText(/08:30 – 09:00/)).toBeInTheDocument()
+    expect(directionsApiMock.transit).not.toHaveBeenCalled()
   })
 })

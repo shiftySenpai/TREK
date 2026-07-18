@@ -4,6 +4,8 @@ import { ArrowLeftRight, ArrowRight, Bus, CableCar, ChevronDown, ChevronUp, Cloc
 import CustomTimePicker from '../shared/CustomTimePicker'
 import { TransitMetaBadges } from './transitDisplay'
 import { transitApi } from '../../api/client'
+import { directionsApi } from '../../api/client'
+import { useAuthStore } from '../../store/authStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useToast } from '../shared/Toast'
 import { useTranslation } from '../../i18n'
@@ -30,6 +32,7 @@ interface TransitLeg {
 }
 export interface TransitItinerary {
   startTime: string; endTime: string; duration: number; transfers: number; walkSeconds: number; legs: TransitLeg[]
+  fare?: { amount: number; currency: string } | null
 }
 
 interface TransitPlaceResult { name: string; lat: number; lng: number; type: string; area: string | null }
@@ -46,6 +49,11 @@ const MODE_GROUPS: { key: string; labelKey: string; Icon: React.ComponentType<{ 
   { key: 'ferry', labelKey: 'transit.mode.ferry', Icon: Sailboat, modes: 'FERRY' },
   { key: 'cable', labelKey: 'transit.mode.cable', Icon: CableCar, modes: 'FUNICULAR,AERIAL_LIFT' },
 ]
+
+// TREK's finer mode groups → Google's transit_mode values (pipe-joined; ferry/cable have no Google equivalent).
+const GOOGLE_TRANSIT_MODE: Partial<Record<string, string>> = {
+  rail: 'train', subway: 'subway', tram: 'tram', bus: 'bus',
+}
 
 function legIcon(mode: string) {
   if (mode === 'WALK') return Footprints
@@ -287,6 +295,14 @@ function ItineraryCard({ it, tzFrom, tzTo, is12h, expanded, onToggle, onAdd, add
               {[...new Set(transitLegs.map(l => l.agency).filter(Boolean))].join(' · ')}
             </div>
           )}
+          {it.fare != null && (
+            <div className="bg-surface-tertiary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 8, padding: '8px 12px', marginTop: 10 }}>
+              <span className="text-content-muted" style={{ fontSize: 'calc(11px * var(--fs-scale-caption, 1))', fontWeight: 600 }}>{t('transit.estimatedFare')}</span>
+              <span className="text-content" style={{ fontSize: 'calc(14px * var(--fs-scale-body, 1))', fontWeight: 700 }}>
+                {new Intl.NumberFormat(undefined, { style: 'currency', currency: it.fare.currency, maximumFractionDigits: 0 }).format(it.fare.amount)}
+              </span>
+            </div>
+          )}
           <button
             onClick={onAdd}
             disabled={adding}
@@ -323,6 +339,7 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
   const toast = useToast()
   const is12h = useSettingsStore(s => s.settings.time_format) === '12h'
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  const hasMapsKey = useAuthStore(s => s.hasMapsKey)
 
   const [from, setFrom] = useState<PickedPlace | null>(initialFrom)
   const [to, setTo] = useState<PickedPlace | null>(initialTo)
@@ -373,8 +390,14 @@ export default function TransitSearchPanel({ day, days, places, accommodations =
       // the destination (#1479), so each mode must convert with the matching zone.
       const timeIso = localToUtcIso(day.date, time, arriveBy ? tzTo : tzFrom)
       const allModes = activeModes.size === MODE_GROUPS.length
-      const modes = allModes ? undefined : MODE_GROUPS.filter(m => activeModes.has(m.key)).map(m => m.modes).join(',')
-      const d = await transitApi.plan({ from: `${from.lat},${from.lng}`, to: `${to.lat},${to.lng}`, time: timeIso, arriveBy, modes })
+      let d: { itineraries: TransitItinerary[] }
+      if (hasMapsKey) {
+        const transitMode = allModes ? undefined : Array.from(activeModes).map(k => GOOGLE_TRANSIT_MODE[k]).filter((v): v is string => !!v).join('|') || undefined
+        d = await directionsApi.transit(`${from.lat},${from.lng}`, `${to.lat},${to.lng}`, timeIso, transitMode)
+      } else {
+        const modes = allModes ? undefined : MODE_GROUPS.filter(m => activeModes.has(m.key)).map(m => m.modes).join(',')
+        d = await transitApi.plan({ from: `${from.lat},${from.lng}`, to: `${to.lat},${to.lng}`, time: timeIso, arriveBy, modes })
+      }
       // MOTIS names the request coordinates START/END — swap in the places the
       // user actually picked so walks read "Walk to Zoologischer Garten".
       const cleanStop = (n: string) => (n === 'START' ? from.name : n === 'END' ? to.name : n)
