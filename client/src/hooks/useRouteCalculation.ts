@@ -16,7 +16,7 @@ const NO_ACCOMMODATIONS: Accommodation[] = []
  * day assignments, draws a straight-line route immediately, then upgrades it to real OSRM
  * road geometry with per-segment durations. Aborts in-flight requests when the day changes.
  */
-export function useRouteCalculation(tripStore: TripStoreState, selectedDayId: number | null, enabled: boolean = true, profile: 'driving' | 'walking' | 'cycling' = 'driving', accommodations: Accommodation[] = NO_ACCOMMODATIONS) {
+export function useRouteCalculation(tripStore: TripStoreState, selectedDayId: number | null, enabled: boolean = true, profile: 'driving' | 'walking' | 'cycling' | 'transit' = 'driving', accommodations: Accommodation[] = NO_ACCOMMODATIONS) {
   const [route, setRoute] = useState<[number, number][][] | null>(null)
   const [routeInfo, setRouteInfo] = useState<RouteResult | null>(null)
   const [routeSegments, setRouteSegments] = useState<RouteSegment[]>([])

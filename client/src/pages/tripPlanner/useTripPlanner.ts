@@ -232,7 +232,7 @@ export function useTripPlanner() {
   // Manual route planning: off by default, toggled from the day-plan footer. Mode
   // (driving/walking) is per-session and selects which travel time the connectors show.
   const [routeShown, setRouteShown] = useState(false)
-  const [routeProfile, setRouteProfile] = useState<'driving' | 'walking'>('driving')
+  const [routeProfile, setRouteProfile] = useState<'driving' | 'walking' | 'transit'>('driving')
   const [fitKey, setFitKey] = useState<number>(0)
   const initialFitTripId = useRef<number | null>(null)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<'left' | 'right' | null>(null)
