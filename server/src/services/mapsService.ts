@@ -9,9 +9,10 @@ import * as placePhotoCache from './placePhotoCache';
 
 let googleApiCallCount = 0;
 
-function googleFetch(endpoint: string, label: string, init?: RequestInit): Promise<Response> {
+export function googleFetch(endpoint: string, label: string, init?: RequestInit): Promise<Response> {
   googleApiCallCount++;
-  console.debug(`[Google API] #${googleApiCallCount} ${label} → ${endpoint}`);
+  const loggedUrl = endpoint.replace(/([?&]key=)[^&]+/, '$1REDACTED');
+  console.debug(`[Google API] #${googleApiCallCount} ${label} → ${loggedUrl}`);
   const referer = process.env.APP_URL ? getAppUrl() : undefined;
   return fetch(endpoint, {
     ...init,
