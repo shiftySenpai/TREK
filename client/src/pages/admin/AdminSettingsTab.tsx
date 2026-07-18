@@ -19,6 +19,7 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
     placesPhotosEnabled, setPlacesPhotosEnabledState,
     placesAutocompleteEnabled, setPlacesAutocompleteEnabledState,
     placesDetailsEnabled, setPlacesDetailsEnabledState,
+    googleDirectionsEnabled, setGoogleDirectionsEnabledState,
     oidcConfig, setOidcConfig, savingOidc, setSavingOidc,
     passwordLogin, setPasswordLogin, passwordRegistration, setPasswordRegistration,
     oidcLogin, setOidcLogin, oidcRegistration, setOidcRegistration,
@@ -382,6 +383,24 @@ export default function AdminSettingsTab({ admin, t }: AdminSettingsTabProps): R
               className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${placesDetailsEnabled ? 'bg-content' : 'bg-edge'}`}
             >
               <span className="absolute left-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200" style={{ transform: placesDetailsEnabled ? 'translateX(20px)' : 'translateX(0)' }} />
+            </button>
+          </div>
+
+          {/* Google Directions Toggle */}
+          <div className="flex items-center justify-between gap-4 py-3 border-t border-slate-100">
+            <div>
+              <p className="text-sm font-medium text-slate-700">{t('admin.googleDirections.title')}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{t('admin.googleDirections.subtitle')}</p>
+            </div>
+            <button
+              onClick={async () => {
+                const next = !googleDirectionsEnabled
+                setGoogleDirectionsEnabledState(next)
+                try { await adminApi.updateGoogleDirections(next) } catch { setGoogleDirectionsEnabledState(!next) }
+              }}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${googleDirectionsEnabled ? 'bg-content' : 'bg-edge'}`}
+            >
+              <span className="absolute left-0.5 h-5 w-5 rounded-full bg-white transition-transform duration-200" style={{ transform: googleDirectionsEnabled ? 'translateX(20px)' : 'translateX(0)' }} />
             </button>
           </div>
 

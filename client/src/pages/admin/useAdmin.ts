@@ -48,6 +48,10 @@ export function useAdmin() {
   const [placesDetailsEnabled, setPlacesDetailsEnabledState] = useState<boolean>(true)
   useEffect(() => { adminApi.getPlacesDetails().then(d => setPlacesDetailsEnabledState(d.enabled)).catch(() => {}) }, [])
 
+  // Google Directions
+  const [googleDirectionsEnabled, setGoogleDirectionsEnabledState] = useState<boolean>(true)
+  useEffect(() => { adminApi.getGoogleDirections().then(d => setGoogleDirectionsEnabledState(d.enabled)).catch(() => {}) }, [])
+
   // Collab features
   const [collabFeatures, setCollabFeatures] = useState<{ chat: boolean; notes: boolean; polls: boolean; whatsnext: boolean }>({ chat: true, notes: true, polls: true, whatsnext: true })
   useEffect(() => { adminApi.getCollabFeatures().then(d => setCollabFeatures(d)).catch(() => {}) }, [])
@@ -370,6 +374,7 @@ export function useAdmin() {
     placesPhotosEnabled, setPlacesPhotosEnabledState,
     placesAutocompleteEnabled, setPlacesAutocompleteEnabledState,
     placesDetailsEnabled, setPlacesDetailsEnabledState,
+    googleDirectionsEnabled, setGoogleDirectionsEnabledState,
     collabFeatures, setCollabFeatures,
     oidcConfig, setOidcConfig, savingOidc, setSavingOidc,
     passwordLogin, setPasswordLogin, passwordRegistration, setPasswordRegistration,

@@ -566,6 +566,8 @@ export const adminApi = {
   updatePlacesAutocomplete: (enabled: boolean) => apiClient.put('/admin/places-autocomplete', { enabled }).then(r => r.data),
   getPlacesDetails: () => apiClient.get('/admin/places-details').then(r => r.data),
   updatePlacesDetails: (enabled: boolean) => apiClient.put('/admin/places-details', { enabled }).then(r => r.data),
+  getGoogleDirections: () => apiClient.get('/admin/google-directions').then(r => r.data),
+  updateGoogleDirections: (enabled: boolean) => apiClient.put('/admin/google-directions', { enabled }).then(r => r.data),
   getCollabFeatures: () => apiClient.get('/admin/collab-features').then(r => r.data),
   updateCollabFeatures: (features: Record<string, boolean>) => apiClient.put('/admin/collab-features', features).then(r => r.data),
   packingTemplates: () => apiClient.get('/admin/packing-templates').then(r => r.data),
