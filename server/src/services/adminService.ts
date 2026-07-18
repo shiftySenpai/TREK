@@ -625,6 +625,18 @@ export function updatePlacesDetails(enabled: boolean) {
   return { enabled: !!enabled };
 }
 
+// ── Google Directions ────────────────────────────────────────────────────
+
+export function getGoogleDirections() {
+  const row = db.prepare("SELECT value FROM app_settings WHERE key = 'directions_enabled'").get() as { value: string } | undefined;
+  return { enabled: row?.value !== 'false' };
+}
+
+export function updateGoogleDirections(enabled: boolean) {
+  db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('directions_enabled', ?)").run(enabled ? 'true' : 'false');
+  return { enabled: !!enabled };
+}
+
 // ── Collab Features ───────────────────────────────────────────────────────
 
 const COLLAB_FEATURE_KEYS = [

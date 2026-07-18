@@ -202,6 +202,17 @@ export class AdminController {
     return result;
   }
 
+  @Get('google-directions')
+  getGoogleDirections() { return this.admin.getGoogleDirections(); }
+
+  @Put('google-directions')
+  updateGoogleDirections(@CurrentUser() user: User, @Body() body: { enabled?: unknown }, @Req() req: Request) {
+    if (typeof body.enabled !== 'boolean') throw new HttpException({ error: 'enabled must be a boolean' }, 400);
+    const result = this.admin.updateGoogleDirections(body.enabled);
+    writeAudit({ userId: user.id, action: 'admin.google_directions', ip: getClientIp(req), details: { enabled: result.enabled } });
+    return result;
+  }
+
   @Get('collab-features')
   getCollabFeatures() { return this.admin.getCollabFeatures(); }
 

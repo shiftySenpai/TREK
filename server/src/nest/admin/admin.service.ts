@@ -47,6 +47,8 @@ export class AdminService {
   updatePlacesAutocomplete(enabled: boolean) { return svc.updatePlacesAutocomplete(enabled); }
   getPlacesDetails() { return svc.getPlacesDetails(); }
   updatePlacesDetails(enabled: boolean) { return svc.updatePlacesDetails(enabled); }
+  getGoogleDirections() { return svc.getGoogleDirections(); }
+  updateGoogleDirections(enabled: boolean) { return svc.updateGoogleDirections(enabled); }
   getCollabFeatures() { return svc.getCollabFeatures(); }
   updateCollabFeatures(body: unknown) { return svc.updateCollabFeatures(body as Parameters<typeof svc.updateCollabFeatures>[0]); }
 
