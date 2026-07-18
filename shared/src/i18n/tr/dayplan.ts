@@ -1,6 +1,7 @@
 import type { TranslationStrings } from '../types';
 
 const dayplan: TranslationStrings = {
+  'dayplan.otherTransport': 'Other Transport',
   'dayplan.icsTooltip': 'İhracat takvimi (ICS)',
   'dayplan.emptyDay': 'Bu gün için planlanmış yer yok',
   'dayplan.cannotReorderTransport': 'Sabit zamanlı rezervasyonlar yeniden sıralanamaz',

@@ -1,6 +1,8 @@
 import type { TranslationStrings } from '../types';
 
 const admin: TranslationStrings = {
+  'admin.googleDirections.title': 'Google Directions Routing',
+  'admin.googleDirections.subtitle': 'Use the Google Directions API for driving routes and public transit itineraries when a user has configured their own Google Maps API key. Disable to save API quota.',
   'admin.notifications.title': '알림',
   'admin.notifications.hint': '알림 채널을 하나 선택하세요. 한 번에 하나만 활성화할 수 있습니다.',
   'admin.notifications.none': '비활성화',

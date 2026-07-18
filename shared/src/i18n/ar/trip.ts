@@ -1,6 +1,7 @@
 import type { TranslationStrings } from '../types';
 
 const trip: TranslationStrings = {
+  'transit.estimatedFare': 'Estimated fare',
   'trip.tabs.plan': 'الخطة',
   'trip.tabs.transports': 'المواصلات',
   'trip.tabs.reservations': 'الحجوزات',
